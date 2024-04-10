@@ -1,4 +1,10 @@
 use std::{env, fs, path::PathBuf, process::exit};
+use std::{
+    env, fs,
+    io::{stdin, Write},
+    path::PathBuf,
+    process::exit,
+};
 
 fn main() {
     let argv: Vec<String> = env::args().collect();
@@ -21,6 +27,19 @@ fn main() {
         }
     } else {
         // REPL
-        todo!();
+        loop {
+            print!("> ");
+            std::io::stdout().flush().unwrap(); // Ensure the prompt is displayed
+
+            let mut line = String::new();
+            match stdin().read_line(&mut line) {
+                Ok(_) => todo!(),
+                Err(err) => {
+                    eprintln!("{}", err);
+                    exit(65)
+                }
+            }
+        }
     }
 }
+
