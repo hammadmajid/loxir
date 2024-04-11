@@ -24,7 +24,7 @@ fn run_file(input_file: PathBuf) {
     let input_file_content = fs::read_to_string(&input_file);
 
     match input_file_content {
-        Ok(_content) => todo!(),
+        Ok(content) => run(content),
         Err(err) => {
             eprintln!("{}", err);
             exit(66)
@@ -39,11 +39,15 @@ fn run_prompt() -> ! {
 
         let mut line = String::new();
         match stdin().read_line(&mut line) {
-            Ok(_) => todo!(),
+            Ok(_) => run(line),
             Err(err) => {
                 eprintln!("{}", err);
                 exit(65)
             }
         }
     }
+}
+
+fn run(source: String) {
+    println!("{}", source);
 }
