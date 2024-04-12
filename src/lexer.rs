@@ -178,7 +178,7 @@ pub struct Token {
     pub kind: TokenKind,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum TokenKind {
     // Single-character tokens.
     LeftParen,
@@ -246,6 +246,45 @@ mod utils {
             None => { unimplemented!() }
             Some(msg) => {
                 "[".to_string() + &line.to_string() + ":" + &column.to_string() + "] " + msg
+            }
+        }
+    }
+
+    pub fn match__literal_or_keyword(lexeme: String) -> Token {
+        let mut keywords_map: HashMap<String, TokenKind> = HashMap::new();
+
+        // Populate the keywords_map with all the keywords and their corresponding TokenKind values
+        keywords_map.insert(String::from("and"), TokenKind::And);
+        keywords_map.insert(String::from("class"), TokenKind::Class);
+        keywords_map.insert(String::from("else"), TokenKind::Else);
+        keywords_map.insert(String::from("false"), TokenKind::False);
+        keywords_map.insert(String::from("fun"), TokenKind::Fun);
+        keywords_map.insert(String::from("for"), TokenKind::For);
+        keywords_map.insert(String::from("if"), TokenKind::If);
+        keywords_map.insert(String::from("nil"), TokenKind::Nil);
+        keywords_map.insert(String::from("or"), TokenKind::Or);
+        keywords_map.insert(String::from("print"), TokenKind::Print);
+        keywords_map.insert(String::from("return"), TokenKind::Return);
+        keywords_map.insert(String::from("super"), TokenKind::Super);
+        keywords_map.insert(String::from("this"), TokenKind::This);
+        keywords_map.insert(String::from("true"), TokenKind::True);
+        keywords_map.insert(String::from("var"), TokenKind::Var);
+        keywords_map.insert(String::from("while"), TokenKind::While);
+
+        let found = keywords_map.get(&lexeme);
+
+        match found {
+            None => {
+                Token {
+                    lexeme,
+                    kind: TokenKind::Identifier,
+                }
+            }
+            Some(kind) => {
+                Token {
+                    lexeme,
+                    kind: *kind,
+                }
             }
         }
     }
