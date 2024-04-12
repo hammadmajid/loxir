@@ -38,6 +38,10 @@ impl Lexer {
                     self.consume()
                 }
                 '\0' => {
+                    tokens.push(Token {
+                        lexeme: self.peek().to_string(),
+                        kind: TokenKind::Eof,
+                    });
                     self.consume();
                 }
                 ';' => {
