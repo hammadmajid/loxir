@@ -304,7 +304,7 @@ mod tests {
 
     #[test]
     fn test_whitespace_and_comments() {
-        let source = "var x = 10; // This is a comment";
+        let source = "var x = 10; // This is a comment\0";
         let mut lexer = Lexer::new(source.to_string());
         let tokens = lexer.scan();
 
@@ -314,29 +314,29 @@ mod tests {
 
     #[test]
     fn test_unknown_token_error() {
-        let source = "var x = 10; @";
+        let source = "var x = 10; @\0";
         let mut lexer = Lexer::new(source.to_string());
         let result = lexer.scan();
 
         assert!(lexer.has_error);
         assert_eq!(lexer.errors[0].kind, LexerErrorKind::UnknownToken);
-        assert_eq!(lexer.errors[0].err_msg, "[1:14] Unknown token found @");
+        assert_eq!(lexer.errors[0].err_msg, "[0:12] Unknown token found @");
     }
 
     #[test]
     fn test_literals() {
-        let source = r#"var name = "John Doe"; var age = 30;"#;
+        let source = "var name = \"John Doe\"; var age = 30;\0";
         let mut lexer = Lexer::new(source.to_string());
         let tokens = lexer.scan();
 
         assert_eq!(tokens.len(), 10);
-        assert_eq!(tokens[4].kind, TokenKind::String);
-        assert_eq!(tokens[9].kind, TokenKind::Number);
+        assert_eq!(tokens[3].kind, TokenKind::String);
+        assert_eq!(tokens[8].kind, TokenKind::Number);
     }
 
     #[test]
     fn test_keywords_and_identifiers() {
-        let source = "var myVar = true;";
+        let source = "var myVar = true;\0";
         let mut lexer = Lexer::new(source.to_string());
         let tokens = lexer.scan();
 
