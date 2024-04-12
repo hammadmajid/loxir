@@ -136,16 +136,15 @@ impl Lexer {
                 }
                 // TODO: add match for other token types
                 _ => {
-                    self.consume();
                     self.has_error = true;
                     self.errors.push(LexerError {
                         err_msg: utils::generate_error_msg(self.line_idx, self.col_idx, LexerErrorKind::UnknownToken, self.peek()),
                         kind: LexerErrorKind::UnknownToken,
                     });
+                    self.consume();
                 }
             }
         }
-
 
         tokens
     }
