@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 pub struct Lexer {
     chars: Vec<char>,
     line_idx: usize,
@@ -163,13 +165,11 @@ pub struct LexerError {
     kind: LexerErrorKind,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub enum LexerErrorKind {
     UnknownToken,
     UnterminatedString,
 }
-
-// TODO: map each error kind with a error message using a hashmap
 
 #[derive(Debug)]
 #[derive(PartialEq)]
@@ -230,8 +230,24 @@ enum TokenKind {
 }
 
 mod utils {
-    pub fn generate_error_msg(line: usize, column: usize) -> String {
-        "[".to_string() + &line.to_string() + ":" + &column.to_string() + "]"
+    use super::*;
+
+    pub fn generate_error_msg(line: usize, column: usize, kind: LexerErrorKind, token: char) -> String {
+        let mut error_map: HashMap<LexerErrorKind, &str> = HashMap::new();
+
+        let binding = "Unknown token found ".to_string() + &*token.to_string();
+        error_map.insert(LexerErrorKind::UnknownToken, &*binding);
+        error_map.insert(LexerErrorKind::UnterminatedString, "Unterminated string");
+
+
+        let msg = error_map.get(&kind);
+
+        match msg {
+            None => { unimplemented!() }
+            Some(msg) => {
+                "[".to_string() + &line.to_string() + ":" + &column.to_string() + "] " + msg
+            }
+        }
     }
 }
 
