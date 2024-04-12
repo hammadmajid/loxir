@@ -134,14 +134,108 @@ impl Lexer {
                         });
                     }
                 }
-                // TODO: add match for other token types
-                _ => {
-                    self.has_error = true;
-                    self.errors.push(LexerError {
-                        err_msg: utils::generate_error_msg(self.line_idx, self.col_idx, LexerErrorKind::UnknownToken, self.peek()),
-                        kind: LexerErrorKind::UnknownToken,
-                    });
+
+                // Single or multi-character tokens
+                '!' => {
+                    if self.peek() == '=' {
+                        self.consume();
+                        tokens.push(Token { lexeme: "!=".to_string(), kind: TokenKind::BangEqual })
+                    } else {
+                        self.consume();
+                        tokens.push(Token { lexeme: "!".to_string(), kind: TokenKind::Bang })
+                    }
+                }
+                '=' => {
                     self.consume();
+                    if self.peek() == '=' {
+                        self.consume();
+                        tokens.push(Token { lexeme: "==".to_string(), kind: TokenKind::EqualEqual })
+                    } else if self.peek() == '>' {
+                        self.consume();
+                        tokens.push(Token { lexeme: "=>".to_string(), kind: TokenKind::GreaterEqual })
+                    } else if self.peek() == '<' {
+                        self.consume();
+                        tokens.push(Token { lexeme: "=<".to_string(), kind: TokenKind::LessEqual })
+                    } else {
+                        self.consume();
+                        tokens.push(Token { lexeme: "=".to_string(), kind: TokenKind::Equal })
+                    }
+                }
+                '<' => {
+                    self.consume();
+                    tokens.push(Token { lexeme: "<".to_string(), kind: TokenKind::Less })
+                }
+                '>' => {
+                    self.consume();
+                    tokens.push(Token { lexeme: "<".to_string(), kind: TokenKind::Greater })
+                }
+                // String literal
+                '"' => {
+                    self.consume();
+                    let mut buffer = String::new();
+                    while self.peek() != '"' {
+                        buffer.push(self.peek());
+                        self.consume();
+
+                        if self.peek() == '\0' {
+                            self.errors.push(LexerError {
+                                err_msg: utils::generate_error_msg(self.line_idx, self.col_idx, LexerErrorKind::UnterminatedString, '\0'),
+                                kind: LexerErrorKind::UnterminatedString,
+                            });
+                            self.consume();
+                            break;
+                        } else if self.peek() == '\n' {
+                            self.consume();
+                            self.line_idx += 1;
+                        }
+                    }
+                    self.consume();
+
+                    tokens.push(Token { lexeme: buffer, kind: TokenKind::String })
+                }
+
+                // Identifiers, keywords and unknown tokens
+                _ => {
+                    if self.peek().is_ascii_alphabetic() || self.peek() == '_' {
+                        let mut buffer = String::from(self.peek());
+                        self.consume();
+                        while self.peek() != ' ' && self.peek() != '\n' && self.peek() != '\0' {
+                            if !self.peek().is_ascii_alphabetic() && !self.peek().is_ascii_digit() && self.peek() != '_' {
+                                break;
+                            }
+                            buffer.push(self.peek());
+                            self.consume();
+                        }
+                        tokens.push(utils::match__literal_or_keyword(buffer));
+                    } else if self.peek().is_ascii_digit() {
+                        let mut buffer = String::from(self.peek());
+                        self.consume();
+                        while self.peek().is_ascii_digit() {
+                            buffer.push(self.peek());
+                            self.consume();
+                        }
+                        // Check for a decimal point
+                        if self.peek() == '.' {
+                            // Ensure the dot is not the last character
+                            if self.peek_next().is_some() && self.peek_next().unwrap().is_ascii_digit() {
+                                buffer.push(self.peek());
+                                self.consume();
+                                // Consume digits after the dot
+                                while self.peek().is_ascii_digit() {
+                                    buffer.push(self.peek());
+                                    self.consume();
+                                }
+                            }
+                        }
+                        tokens.push(Token { lexeme: buffer, kind: TokenKind::Number });
+                    } else {
+                        self.has_error = true;
+                        self.errors.push(LexerError {
+                            err_msg: utils::generate_error_msg(self.line_idx, self.col_idx, LexerErrorKind::UnknownToken, self.peek()),
+                            kind: LexerErrorKind::UnknownToken,
+                        });
+                        self.consume();
+                    }
                 }
             }
         }
