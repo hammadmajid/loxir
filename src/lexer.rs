@@ -16,6 +16,24 @@ impl Lexer {
     }
 
 }
+
+    fn consume(&mut self) {
+        self.col_idx += 1;
+    }
+
+    fn peek(&self) -> char {
+        self.chars[self.col_idx]
+    }
+
+    fn peek_next(&self) -> Option<char> {
+        if self.col_idx + 1 < self.chars.len() {
+            Some(self.chars[self.col_idx])
+        } else {
+            None
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct LexerError {
     pub err_msg: String,
