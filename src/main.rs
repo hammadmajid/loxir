@@ -24,7 +24,7 @@ fn run_file(input_file: PathBuf) {
     let input_file_content = fs::read_to_string(&input_file);
 
     match input_file_content {
-        Ok(content) => run(content),
+        Ok(content) => run(content, RunMode::File),
         Err(err) => {
             eprintln!("{}", err);
             exit(66)
@@ -39,7 +39,7 @@ fn run_prompt() -> ! {
 
         let mut line = String::new();
         match stdin().read_line(&mut line) {
-            Ok(_) => run(line),
+            Ok(_) => run(line, RunMode::REPL),
             Err(err) => {
                 eprintln!("{}", err);
                 exit(65)
@@ -48,6 +48,12 @@ fn run_prompt() -> ! {
     }
 }
 
-fn run(source: String) {
-    println!("{}", source);
+fn run(source: String, mode: RunMode) {
+
+enum RunMode {
+    // runs the code from a source file
+    File,
+
+    // runs the code inside an interactive REPL
+    REPL,
 }
