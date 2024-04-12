@@ -3,7 +3,6 @@ pub struct Lexer {
     line_idx: usize,
     col_idx: usize,
     pub has_error: bool,
-    pub error: LexerError,
 }
 
 impl Lexer {
@@ -13,7 +12,6 @@ impl Lexer {
             line_idx: 0,
             col_idx: 0,
             has_error: false,
-            error: LexerError { err_msg: "".to_string(), kind: LexerErrorKind::UnknownToken },
         }
     }
 
