@@ -1,8 +1,8 @@
 #[derive(Debug)]
 #[derive(PartialEq)]
 pub struct Token {
-    lexeme: String,
-    kind: TokenKind,
+    pub lexeme: String,
+    pub kind: TokenKind,
 }
 
 #[derive(Debug, PartialEq)]
