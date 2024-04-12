@@ -243,18 +243,17 @@ mod utils {
 
     pub fn generate_error_msg(line: usize, column: usize, kind: LexerErrorKind, token: char) -> String {
         let mut error_map: HashMap<LexerErrorKind, &str> = HashMap::new();
-
-        let binding = "Unknown token found ".to_string() + &*token.to_string();
-        error_map.insert(LexerErrorKind::UnknownToken, &*binding);
+        
+        let binding = format!("Unknown token found {}", token);
+        error_map.insert(LexerErrorKind::UnknownToken, &binding);
         error_map.insert(LexerErrorKind::UnterminatedString, "Unterminated string");
-
 
         let msg = error_map.get(&kind);
 
         match msg {
             None => { unimplemented!() }
             Some(msg) => {
-                "[".to_string() + &line.to_string() + ":" + &column.to_string() + "] " + msg
+                format!("[{}:{}] {}", line, column, msg)
             }
         }
     }
