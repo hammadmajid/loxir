@@ -179,7 +179,7 @@ pub struct Token {
 }
 
 #[derive(Debug, PartialEq)]
-enum TokenKind {
+pub enum TokenKind {
     // Single-character tokens.
     LeftParen,
     RightParen,
