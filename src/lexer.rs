@@ -206,7 +206,7 @@ impl Lexer {
                             buffer.push(self.peek());
                             self.consume();
                         }
-                        tokens.push(utils::match__literal_or_keyword(buffer));
+                        tokens.push(utils::match_literal_or_keyword(buffer));
                     } else if self.peek().is_ascii_digit() {
                         let mut buffer = String::from(self.peek());
                         self.consume();
@@ -263,6 +263,7 @@ impl Lexer {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct LexerError {
     pub err_msg: String,
     kind: LexerErrorKind,
@@ -352,7 +353,7 @@ mod utils {
         }
     }
 
-    pub fn match__literal_or_keyword(lexeme: String) -> Token {
+    pub fn match_literal_or_keyword(lexeme: String) -> Token {
         let mut keywords_map: HashMap<String, TokenKind> = HashMap::new();
 
         // Populate the keywords_map with all the keywords and their corresponding TokenKind values
@@ -409,8 +410,7 @@ mod tests {
     #[test]
     fn test_unknown_token_error() {
         let source = "var x = 10; @\0";
-        let mut lexer = Lexer::new(source.to_string());
-        let result = lexer.scan();
+        let lexer = Lexer::new(source.to_string());
 
         assert!(lexer.has_error);
         assert_eq!(lexer.errors[0].kind, LexerErrorKind::UnknownToken);
