@@ -4,6 +4,7 @@ pub struct Lexer {
     chars: Vec<char>,
     line_idx: usize,
     col_idx: usize,
+    read_idx: usize,
     pub has_error: bool,
     pub errors: Vec<LexerError>,
 }
@@ -14,6 +15,7 @@ impl Lexer {
             chars: source.chars().collect(),
             line_idx: 0,
             col_idx: 0,
+            read_idx: 0,
             has_error: false,
             errors: vec![],
         }
@@ -35,6 +37,7 @@ impl Lexer {
                 }
                 '\n' => {
                     self.line_idx += 1;
+                    self.col_idx = 0;
                     self.consume()
                 }
                 '\0' => {
@@ -122,6 +125,7 @@ impl Lexer {
                             self.consume();
                         }
                         self.line_idx += 1;
+                        self.col_idx = 0;
                     } else {
                         // Not a comment, so it's a slash token
                         tokens.push(Token {
@@ -132,6 +136,7 @@ impl Lexer {
                 }
                 // TODO: add match for other token types
                 _ => {
+                    self.consume();
                     self.has_error = true;
                     self.errors.push(LexerError {
                         err_msg: utils::generate_error_msg(self.line_idx, self.col_idx, LexerErrorKind::UnknownToken, self.peek()),
@@ -147,16 +152,17 @@ impl Lexer {
 
 
     fn consume(&mut self) {
+        self.read_idx += 1;
         self.col_idx += 1;
     }
 
     fn peek(&self) -> char {
-        self.chars[self.col_idx]
+        self.chars[self.read_idx]
     }
 
     fn peek_next(&self) -> Option<char> {
-        if self.col_idx + 1 < self.chars.len() {
-            Some(self.chars[self.col_idx])
+        if self.read_idx + 1 < self.chars.len() {
+            Some(self.chars[self.read_idx])
         } else {
             None
         }
