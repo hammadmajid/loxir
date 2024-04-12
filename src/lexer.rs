@@ -2,7 +2,7 @@ pub struct Lexer {
     chars: Vec<char>,
     line_idx: usize,
     col_idx: usize,
-    has_error: bool,
+    pub has_error: bool,
 }
 
 impl Lexer {
