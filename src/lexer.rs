@@ -16,6 +16,19 @@ impl Lexer {
     }
 
 }
+#[derive(Debug)]
+pub struct LexerError {
+    pub err_msg: String,
+    kind: LexerErrorKind,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum LexerErrorKind {
+    UnknownToken,
+    UnterminatedString,
+}
+
+// TODO: map each error kind with a error message using a hashmap
 
 #[derive(Debug)]
 #[derive(PartialEq)]
