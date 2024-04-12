@@ -17,7 +17,10 @@ impl Lexer {
         }
     }
 
-}
+    pub fn scan(&mut self) -> Vec<Token> {
+        todo!()
+    }
+
 
     fn consume(&mut self) {
         self.col_idx += 1;
