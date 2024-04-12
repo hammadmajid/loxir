@@ -1,9 +1,12 @@
+mod lexer;
+
 use std::{
     env, fs,
     io::{stdin, Write},
     path::PathBuf,
     process::exit,
 };
+use lexer::Lexer;
 
 fn main() {
     let argv: Vec<String> = env::args().collect();
@@ -49,6 +52,26 @@ fn run_prompt() -> ! {
 }
 
 fn run(source: String, mode: RunMode) {
+    let mut lexer = Lexer::new(source);
+
+    let tokens = lexer.scan();
+
+    if lexer.has_error {
+        for error in lexer.errors {
+            eprintln!("{}", error.err_msg);
+        }
+        match mode {
+            RunMode::File => {
+                exit(65);
+            }
+            RunMode::REPL => { return; }
+        }
+    } else {
+        for token in tokens {
+            println!("{:#?}", token);
+        }
+    }
+}
 
 enum RunMode {
     // runs the code from a source file
