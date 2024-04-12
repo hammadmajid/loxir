@@ -18,7 +18,125 @@ impl Lexer {
     }
 
     pub fn scan(&mut self) -> Vec<Token> {
-        todo!()
+        let mut tokens: Vec<Token> = vec![];
+
+        loop {
+            if self.peek_next().is_none() {
+                break;
+            }
+
+            match self.peek() {
+                // Single-character tokens.
+                ' ' => {
+                    // ignore whitespace
+                    self.consume();
+                }
+                '\n' => {
+                    self.line_idx += 1;
+                    self.consume()
+                }
+                '\0' => {
+                    self.consume();
+                }
+                ';' => {
+                    tokens.push(Token {
+                        lexeme: self.peek().to_string(),
+                        kind: TokenKind::Semicolon,
+                    });
+                    self.consume();
+                }
+                '+' => {
+                    tokens.push(Token {
+                        lexeme: self.peek().to_string(),
+                        kind: TokenKind::Plus,
+                    });
+                    self.consume();
+                }
+                '-' => {
+                    tokens.push(Token {
+                        lexeme: self.peek().to_string(),
+                        kind: TokenKind::Minus,
+                    });
+                    self.consume();
+                }
+                '*' => {
+                    tokens.push(Token {
+                        lexeme: self.peek().to_string(),
+                        kind: TokenKind::Star,
+                    });
+                    self.consume();
+                }
+                ',' => {
+                    tokens.push(Token {
+                        lexeme: self.peek().to_string(),
+                        kind: TokenKind::Comma,
+                    });
+                    self.consume();
+                }
+                '.' => {
+                    tokens.push(Token {
+                        lexeme: self.peek().to_string(),
+                        kind: TokenKind::Dot,
+                    });
+                    self.consume();
+                }
+                '(' => {
+                    tokens.push(Token {
+                        lexeme: self.peek().to_string(),
+                        kind: TokenKind::LeftParen,
+                    });
+                    self.consume();
+                }
+                ')' => {
+                    tokens.push(Token {
+                        lexeme: self.peek().to_string(),
+                        kind: TokenKind::RightParen,
+                    });
+                    self.consume();
+                }
+                '{' => {
+                    tokens.push(Token {
+                        lexeme: self.peek().to_string(),
+                        kind: TokenKind::LeftBrace,
+                    });
+                    self.consume();
+                }
+                '}' => {
+                    tokens.push(Token {
+                        lexeme: self.peek().to_string(),
+                        kind: TokenKind::RightBrace,
+                    });
+                    self.consume();
+                }
+                '/' => {
+                    self.consume(); // Consume the first '/'
+                    if self.peek() == '/' {
+                        // Single-line comment
+                        while self.peek() != '\n' && self.peek() != '\0' {
+                            self.consume();
+                        }
+                        self.line_idx += 1;
+                    } else {
+                        // Not a comment, so it's a slash token
+                        tokens.push(Token {
+                            lexeme: '/'.to_string(),
+                            kind: TokenKind::Slash,
+                        });
+                    }
+                }
+                // TODO: add match for other token types
+                _ => {
+                    self.has_error = true;
+                    self.errors.push(LexerError {
+                        err_msg: utils::generate_error_msg(self.line_idx, self.col_idx, LexerErrorKind::UnknownToken, self.peek()),
+                        kind: LexerErrorKind::UnknownToken,
+                    });
+                }
+            }
+        }
+
+
+        tokens
     }
 
 
