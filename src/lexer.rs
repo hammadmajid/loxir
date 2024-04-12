@@ -55,3 +55,9 @@ enum TokenKind {
 
     Eof,
 }
+
+mod utils {
+    pub fn generate_error_msg(line: usize, column: usize) -> String {
+        "[".to_string() + &line.to_string() + ":" + &column.to_string() + "]"
+    }
+}
