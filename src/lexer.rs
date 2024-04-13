@@ -41,7 +41,6 @@ impl Lexer {
                     self.consume()
                 }
                 '\0' => {
-                    tokens.push(Token::Eof);
                     self.consume();
                 }
                 ';' => {
@@ -154,6 +153,8 @@ impl Lexer {
             }
         }
 
+        tokens.push(Token::Eof);
+        
         tokens
     }
 
@@ -351,7 +352,7 @@ mod tests {
         let mut lexer = Lexer::new(source.to_string());
         let tokens = lexer.scan();
 
-        assert_eq!(tokens.len(), 5);
+        assert_eq!(tokens.len(), 6);
         assert_eq!(tokens[4], Token::Semicolon);
     }
 
@@ -362,7 +363,7 @@ mod tests {
         let _tokens = lexer.scan();
 
         assert!(lexer.has_error);
-        assert_eq!(lexer.errors[0], "[0:12] Unknown token found @");
+        assert_eq!(lexer.errors[0], "[0:13] Unknown token found @");
     }
 
     #[test]
@@ -371,7 +372,7 @@ mod tests {
         let mut lexer = Lexer::new(source.to_string());
         let tokens = lexer.scan();
 
-        assert_eq!(tokens.len(), 10);
+        assert_eq!(tokens.len(), 11);
         assert_eq!(tokens[3], Token::String(String::from("John Doe")));
         assert_eq!(tokens[8], Token::Number(String::from("30")));
     }
@@ -382,7 +383,7 @@ mod tests {
         let mut lexer = Lexer::new(source.to_string());
         let tokens = lexer.scan();
 
-        assert_eq!(tokens.len(), 5);
+        assert_eq!(tokens.len(), 6);
         assert_eq!(tokens[0], Token::Var);
         assert_eq!(tokens[1], Token::Identifier(String::from("myVar")));
         assert_eq!(tokens[3], Token::True);
@@ -394,7 +395,7 @@ mod tests {
         let mut lexer = Lexer::new(source.to_string());
         let tokens = lexer.scan();
 
-        assert_eq!(tokens.len(), 6);
+        assert_eq!(tokens.len(), 7);
         assert_eq!(tokens[0], Token::BangEqual);
         assert_eq!(tokens[1], Token::EqualEqual);
         assert_eq!(tokens[2], Token::GreaterEqual);
@@ -419,7 +420,7 @@ mod tests {
         let mut lexer = Lexer::new(source.to_string());
         let tokens = lexer.scan();
 
-        assert_eq!(tokens.len(), 5);
+        assert_eq!(tokens.len(), 6);
         assert_eq!(tokens[3], Token::Number(String::from("3.14159")));
     }
 
@@ -429,7 +430,7 @@ mod tests {
         let mut lexer = Lexer::new(source.to_string());
         let tokens = lexer.scan();
 
-        assert_eq!(tokens.len(), 5);
+        assert_eq!(tokens.len(), 6);
         assert_eq!(tokens[3], Token::String(String::from("")));
     }
 
@@ -439,7 +440,7 @@ mod tests {
         let mut lexer = Lexer::new(source.to_string());
         let tokens = lexer.scan();
 
-        assert_eq!(tokens.len(), 15);
+        assert_eq!(tokens.len(), 16);
         assert_eq!(tokens[4], Token::Semicolon);
         assert_eq!(tokens[9], Token::Semicolon);
         assert_eq!(tokens[14], Token::Semicolon);
@@ -451,7 +452,7 @@ mod tests {
         let mut lexer = Lexer::new(source.to_string());
         let tokens = lexer.scan();
 
-        assert_eq!(tokens.len(), 15);
+        assert_eq!(tokens.len(), 16);
         assert_eq!(tokens[4], Token::Semicolon);
         assert_eq!(tokens[9], Token::Semicolon);
         assert_eq!(tokens[14], Token::Semicolon);
@@ -463,7 +464,7 @@ mod tests {
         let mut lexer = Lexer::new(source.to_string());
         let tokens = lexer.scan();
 
-        assert_eq!(tokens.len(), 15);
+        assert_eq!(tokens.len(), 16);
         assert_eq!(tokens[3], Token::Number(String::from("10")));
         assert_eq!(tokens[5], Token::Number(String::from("20")));
         assert_eq!(tokens[7], Token::Number(String::from("3")));
