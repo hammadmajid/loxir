@@ -465,11 +465,11 @@ mod tests {
         let mut lexer = Lexer::new(source.to_string());
         let tokens = lexer.scan();
 
-        assert_eq!(tokens.len(), 16);
-        assert_eq!(tokens[3], Token::Number(String::from("10")));
-        assert_eq!(tokens[5], Token::Number(String::from("20")));
-        assert_eq!(tokens[7], Token::Number(String::from("3")));
-        assert_eq!(tokens[9], Token::Number(String::from("2")));
-        assert_eq!(tokens[14], Token::Semicolon);
+        assert_eq!(tokens.len(), 14);
+        assert_eq!(tokens[4], Token::Number(String::from("10")));
+        assert_eq!(tokens[6], Token::Number(String::from("20")));
+        assert_eq!(tokens[9], Token::Number(String::from("3")));
+        assert_eq!(tokens[11], Token::Number(String::from("2")));
+        assert_eq!(tokens[12], Token::Semicolon);
     }
 }
