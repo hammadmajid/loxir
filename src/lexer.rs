@@ -154,7 +154,7 @@ impl Lexer {
         }
 
         tokens.push(Token::Eof);
-        
+
         tokens
     }
 
@@ -166,6 +166,7 @@ impl Lexer {
             self.consume();
 
             if self.peek() == '\0' {
+                self.has_error = true;
                 self.errors.push(Lexer::generate_error_msg(self.line_idx, self.col_idx, LexerError::UnterminatedString, '\0'),
                 );
                 self.consume();
@@ -411,7 +412,7 @@ mod tests {
         let _tokens = lexer.scan();
 
         assert!(lexer.has_error);
-        assert_eq!(lexer.errors[0], "[0:14] Unterminated string");
+        assert_eq!(lexer.errors[0], "[0:22] Unterminated string");
     }
 
     #[test]
