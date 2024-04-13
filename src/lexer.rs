@@ -106,7 +106,7 @@ impl Lexer {
                                     self.consume();
                                 } else if self.peek() == '\0' {
                                     self.has_error = true;
-                                    self.errors.push(Lexer::generate_error_msg(self.line_idx, self.col_idx, LexerError::UnterminatedMultilineComment, self.peek()));
+                                    self.errors.push(self.generate_error_msg(LexerError::UnterminatedMultilineComment));
                                     break;
                                 } else {
                                     self.consume();
@@ -116,7 +116,7 @@ impl Lexer {
                                 self.consume();
                             } else if self.peek() == '\0' {
                                 self.has_error = true;
-                                self.errors.push(Lexer::generate_error_msg(self.line_idx, self.col_idx, LexerError::UnterminatedMultilineComment, self.peek()));
+                                self.errors.push(self.generate_error_msg(LexerError::UnterminatedMultilineComment));
                                 break;
                             } else {
                                 self.consume();
@@ -175,7 +175,7 @@ impl Lexer {
                         self.consume_number(&mut tokens);
                     } else {
                         self.has_error = true;
-                        self.errors.push(Lexer::generate_error_msg(self.line_idx, self.col_idx, LexerError::UnknownToken, self.peek()),
+                        self.errors.push(self.generate_error_msg(LexerError::UnknownToken),
                         );
                         self.consume();
                     }
@@ -197,7 +197,7 @@ impl Lexer {
 
             if self.peek() == '\0' {
                 self.has_error = true;
-                self.errors.push(Lexer::generate_error_msg(self.line_idx, self.col_idx, LexerError::UnterminatedString, '\0'),
+                self.errors.push(self.generate_error_msg(LexerError::UnterminatedString),
                 );
                 self.consume();
                 break;
@@ -244,13 +244,13 @@ impl Lexer {
             buffer.push(self.peek());
             self.consume();
         }
-        tokens.push(Lexer::match_identifier_or_keyword(buffer));
+        tokens.push(self.match_identifier_or_keyword(buffer));
     }
 
-    fn generate_error_msg(line: usize, column: usize, kind: LexerError, token: char) -> String {
+    fn generate_error_msg(&self, kind: LexerError) -> String {
         let mut error_map: HashMap<LexerError, &str> = HashMap::new();
 
-        let binding = format!("Unknown token found {}", token);
+        let binding = format!("Unknown token found {}", self.peek());
         error_map.insert(LexerError::UnknownToken, &binding);
         error_map.insert(LexerError::UnterminatedString, "Unterminated string");
         error_map.insert(LexerError::UnterminatedMultilineComment, "Unterminated multiline comment");
@@ -260,12 +260,12 @@ impl Lexer {
         match msg {
             None => { unimplemented!() }
             Some(msg) => {
-                format!("[{}:{}] {}", line, column, msg)
+                format!("[{}:{}] {}", self.line_idx, self.col_idx, msg)
             }
         }
     }
 
-    fn match_identifier_or_keyword(lexeme: String) -> Token {
+    fn match_identifier_or_keyword(&self, lexeme: String) -> Token {
         let mut keywords_map: HashMap<String, Token> = HashMap::new();
 
         // Populate the keywords_map with all the keywords and their corresponding TokenKind values
