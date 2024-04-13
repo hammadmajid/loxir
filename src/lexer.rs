@@ -387,4 +387,87 @@ mod tests {
         assert_eq!(tokens[1], Token::Identifier(String::from("myVar")));
         assert_eq!(tokens[3], Token::True);
     }
+
+    #[test]
+    fn test_multi_character_tokens() {
+        let source = "!= == >= <= < >\0";
+        let mut lexer = Lexer::new(source.to_string());
+        let tokens = lexer.scan();
+
+        assert_eq!(tokens.len(), 6);
+        assert_eq!(tokens[0], Token::BangEqual);
+        assert_eq!(tokens[1], Token::EqualEqual);
+        assert_eq!(tokens[2], Token::GreaterEqual);
+        assert_eq!(tokens[3], Token::LessEqual);
+        assert_eq!(tokens[4], Token::Less);
+        assert_eq!(tokens[5], Token::Greater);
+    }
+
+    #[test]
+    fn test_unterminated_string() {
+        let source = "var name = \"John Doe;\0";
+        let mut lexer = Lexer::new(source.to_string());
+        let _tokens = lexer.scan();
+
+        assert!(lexer.has_error);
+        assert_eq!(lexer.errors[0], "[0:14] Unterminated string");
+    }
+
+    #[test]
+    fn test_number_with_decimal() {
+        let source = "var pi = 3.14159;\0";
+        let mut lexer = Lexer::new(source.to_string());
+        let tokens = lexer.scan();
+
+        assert_eq!(tokens.len(), 5);
+        assert_eq!(tokens[3], Token::Number(String::from("3.14159")));
+    }
+
+    #[test]
+    fn test_empty_string() {
+        let source = "var empty = \"\";\0";
+        let mut lexer = Lexer::new(source.to_string());
+        let tokens = lexer.scan();
+
+        assert_eq!(tokens.len(), 5);
+        assert_eq!(tokens[3], Token::String(String::from("")));
+    }
+
+    #[test]
+    fn test_multiple_statements() {
+        let source = "var x = 10; var y = 20; var z = 30;\0";
+        let mut lexer = Lexer::new(source.to_string());
+        let tokens = lexer.scan();
+
+        assert_eq!(tokens.len(), 15);
+        assert_eq!(tokens[4], Token::Semicolon);
+        assert_eq!(tokens[9], Token::Semicolon);
+        assert_eq!(tokens[14], Token::Semicolon);
+    }
+
+    #[test]
+    fn test_newline_handling() {
+        let source = "var x = 10;\nvar y = 20;\nvar z = 30;\0";
+        let mut lexer = Lexer::new(source.to_string());
+        let tokens = lexer.scan();
+
+        assert_eq!(tokens.len(), 15);
+        assert_eq!(tokens[4], Token::Semicolon);
+        assert_eq!(tokens[9], Token::Semicolon);
+        assert_eq!(tokens[14], Token::Semicolon);
+    }
+
+    #[test]
+    fn test_complex_expression() {
+        let source = "var result = (10 + 20) * 3 / 2;\0";
+        let mut lexer = Lexer::new(source.to_string());
+        let tokens = lexer.scan();
+
+        assert_eq!(tokens.len(), 15);
+        assert_eq!(tokens[3], Token::Number(String::from("10")));
+        assert_eq!(tokens[5], Token::Number(String::from("20")));
+        assert_eq!(tokens[7], Token::Number(String::from("3")));
+        assert_eq!(tokens[9], Token::Number(String::from("2")));
+        assert_eq!(tokens[14], Token::Semicolon);
+    }
 }
