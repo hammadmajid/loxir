@@ -130,6 +130,7 @@ impl Lexer {
 
                 // Single or multi-character tokens
                 '!' => {
+                    self.consume();
                     if self.peek() == '=' {
                         self.consume();
                         tokens.push(Token::BangEqual)
@@ -143,12 +144,6 @@ impl Lexer {
                     if self.peek() == '=' {
                         self.consume();
                         tokens.push(Token::EqualEqual)
-                    } else if self.peek() == '>' {
-                        self.consume();
-                        tokens.push(Token::GreaterEqual)
-                    } else if self.peek() == '<' {
-                        self.consume();
-                        tokens.push(Token::LessEqual)
                     } else {
                         self.consume();
                         tokens.push(Token::Equal)
@@ -156,12 +151,22 @@ impl Lexer {
                 }
                 '<' => {
                     self.consume();
-                    tokens.push(Token::Less)
-                }
+                    if self.peek() == '=' {
+                        self.consume();
+                        tokens.push(Token::LessEqual)
+                    } else {
+                        self.consume();
+                        tokens.push(Token::Less)
+                    }                }
                 '>' => {
                     self.consume();
-                    tokens.push(Token::Greater)
-                }
+                    if self.peek() == '=' {
+                        self.consume();
+                        tokens.push(Token::GreaterEqual)
+                    } else {
+                        self.consume();
+                        tokens.push(Token::Greater)
+                    }                }
                 // Variable length tokens
                 '"' => {
                     self.consume_string_literal(&mut tokens);
@@ -514,7 +519,7 @@ mod tests {
         assert_eq!(tokens.len(), 1);
         assert_eq!(tokens[0], Token::Eof);
     }
-    
+
     #[test]
     fn test_unterminated_multiline_comment() {
         let source = "/* This is a\nmultiline comment in lox\0";
