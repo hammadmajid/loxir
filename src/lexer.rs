@@ -410,7 +410,8 @@ mod tests {
     #[test]
     fn test_unknown_token_error() {
         let source = "var x = 10; @\0";
-        let lexer = Lexer::new(source.to_string());
+        let mut lexer = Lexer::new(source.to_string());
+        let _tokens = lexer.scan();
 
         assert!(lexer.has_error);
         assert_eq!(lexer.errors[0].kind, LexerErrorKind::UnknownToken);
