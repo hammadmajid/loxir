@@ -162,23 +162,23 @@ impl Lexer {
                     self.consume();
                     tokens.push(Token::Greater)
                 }
-                // String literal
+                // Variable length tokens
                 '"' => {
                     self.consume_string_literal(&mut tokens);
                 }
+                '0'..='9' => {
+                    self.consume_number(&mut tokens);
+                }
+                'a'..='z' | 'A'..='Z' | '_' => {
+                    self.consume_keyword_or_literal(&mut tokens)
+                }
 
-                // Identifiers, keywords and unknown tokens
+                // Unknown tokens
                 _ => {
-                    if self.peek().is_ascii_alphabetic() || self.peek() == '_' {
-                        self.consume_keyword_or_literal(&mut tokens);
-                    } else if self.peek().is_ascii_digit() {
-                        self.consume_number(&mut tokens);
-                    } else {
-                        self.has_error = true;
-                        self.errors.push(self.generate_error_msg(LexerError::UnknownToken),
-                        );
-                        self.consume();
-                    }
+                    self.has_error = true;
+                    self.errors.push(self.generate_error_msg(LexerError::UnknownToken),
+                    );
+                    self.consume();
                 }
             }
         }
@@ -504,17 +504,16 @@ mod tests {
         assert_eq!(tokens[11], Token::Number(String::from("2")));
         assert_eq!(tokens[12], Token::Semicolon);
     }
-    
+
     #[test]
     fn test_multiline_comment() {
         let source = "/* This is a\nmultiline comment in lox*/\0";
         let mut lexer = Lexer::new(source.to_string());
         let tokens = lexer.scan();
-        
+
         assert_eq!(tokens.len(), 1);
         assert_eq!(tokens[0], Token::Eof);
     }
-    
     
     #[test]
     fn test_unterminated_multiline_comment() {
