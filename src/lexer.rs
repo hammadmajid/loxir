@@ -147,7 +147,7 @@ impl Lexer {
                     } else {
                         self.has_error = true;
                         self.errors.push(LexerError {
-                            err_msg: utils::generate_error_msg(self.line_idx, self.col_idx, LexerErrorKind::UnknownToken, self.peek()),
+                            err_msg: Lexer::generate_error_msg(self.line_idx, self.col_idx, LexerErrorKind::UnknownToken, self.peek()),
                             kind: LexerErrorKind::UnknownToken,
                         });
                         self.consume();
@@ -168,7 +168,7 @@ impl Lexer {
 
             if self.peek() == '\0' {
                 self.errors.push(LexerError {
-                    err_msg: utils::generate_error_msg(self.line_idx, self.col_idx, LexerErrorKind::UnterminatedString, '\0'),
+                    err_msg: Lexer::generate_error_msg(self.line_idx, self.col_idx, LexerErrorKind::UnterminatedString, '\0'),
                     kind: LexerErrorKind::UnterminatedString,
                 });
                 self.consume();
@@ -216,9 +216,58 @@ impl Lexer {
             buffer.push(self.peek());
             self.consume();
         }
-        tokens.push(utils::match_literal_or_keyword(buffer));
+        tokens.push(Lexer::match_literal_or_keyword(buffer));
     }
 
+    fn generate_error_msg(line: usize, column: usize, kind: LexerErrorKind, token: char) -> String {
+        let mut error_map: HashMap<LexerErrorKind, &str> = HashMap::new();
+
+        let binding = format!("Unknown token found {}", token);
+        error_map.insert(LexerErrorKind::UnknownToken, &binding);
+        error_map.insert(LexerErrorKind::UnterminatedString, "Unterminated string");
+
+        let msg = error_map.get(&kind);
+
+        match msg {
+            None => { unimplemented!() }
+            Some(msg) => {
+                format!("[{}:{}] {}", line, column, msg)
+            }
+        }
+    }
+
+    fn match_literal_or_keyword(lexeme: String) -> Token {
+        let mut keywords_map: HashMap<String, Token> = HashMap::new();
+
+        // Populate the keywords_map with all the keywords and their corresponding TokenKind values
+        keywords_map.insert(String::from("and"), Token::And);
+        keywords_map.insert(String::from("class"), Token::Class);
+        keywords_map.insert(String::from("else"), Token::Else);
+        keywords_map.insert(String::from("false"), Token::False);
+        keywords_map.insert(String::from("fun"), Token::Fun);
+        keywords_map.insert(String::from("for"), Token::For);
+        keywords_map.insert(String::from("if"), Token::If);
+        keywords_map.insert(String::from("nil"), Token::Nil);
+        keywords_map.insert(String::from("or"), Token::Or);
+        keywords_map.insert(String::from("print"), Token::Print);
+        keywords_map.insert(String::from("return"), Token::Return);
+        keywords_map.insert(String::from("super"), Token::Super);
+        keywords_map.insert(String::from("this"), Token::This);
+        keywords_map.insert(String::from("true"), Token::True);
+        keywords_map.insert(String::from("var"), Token::Var);
+        keywords_map.insert(String::from("while"), Token::While);
+
+        let found = keywords_map.get(&lexeme);
+
+        match found {
+            None => {
+                Token::Identifier(lexeme)
+            }
+            Some(kind) => {
+                kind.clone()
+            }
+        }
+    }
 
     fn consume(&mut self) {
         self.read_idx += 1;
@@ -301,60 +350,6 @@ pub enum Token {
     While,
 
     Eof,
-}
-
-mod utils {
-    use super::*;
-
-    pub fn generate_error_msg(line: usize, column: usize, kind: LexerErrorKind, token: char) -> String {
-        let mut error_map: HashMap<LexerErrorKind, &str> = HashMap::new();
-
-        let binding = format!("Unknown token found {}", token);
-        error_map.insert(LexerErrorKind::UnknownToken, &binding);
-        error_map.insert(LexerErrorKind::UnterminatedString, "Unterminated string");
-
-        let msg = error_map.get(&kind);
-
-        match msg {
-            None => { unimplemented!() }
-            Some(msg) => {
-                format!("[{}:{}] {}", line, column, msg)
-            }
-        }
-    }
-
-    pub fn match_literal_or_keyword(lexeme: String) -> Token {
-        let mut keywords_map: HashMap<String, Token> = HashMap::new();
-
-        // Populate the keywords_map with all the keywords and their corresponding TokenKind values
-        keywords_map.insert(String::from("and"), Token::And);
-        keywords_map.insert(String::from("class"), Token::Class);
-        keywords_map.insert(String::from("else"), Token::Else);
-        keywords_map.insert(String::from("false"), Token::False);
-        keywords_map.insert(String::from("fun"), Token::Fun);
-        keywords_map.insert(String::from("for"), Token::For);
-        keywords_map.insert(String::from("if"), Token::If);
-        keywords_map.insert(String::from("nil"), Token::Nil);
-        keywords_map.insert(String::from("or"), Token::Or);
-        keywords_map.insert(String::from("print"), Token::Print);
-        keywords_map.insert(String::from("return"), Token::Return);
-        keywords_map.insert(String::from("super"), Token::Super);
-        keywords_map.insert(String::from("this"), Token::This);
-        keywords_map.insert(String::from("true"), Token::True);
-        keywords_map.insert(String::from("var"), Token::Var);
-        keywords_map.insert(String::from("while"), Token::While);
-
-        let found = keywords_map.get(&lexeme);
-
-        match found {
-            None => {
-                Token::Identifier(lexeme)
-            }
-            Some(kind) => {
-                kind.clone()
-            }
-        }
-    }
 }
 
 #[cfg(test)]
