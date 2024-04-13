@@ -14,7 +14,7 @@ impl Lexer {
         Lexer {
             chars: source.chars().collect(),
             line_idx: 0,
-            col_idx: 0,
+            col_idx: 1,
             read_idx: 0,
             has_error: false,
             errors: vec![],
