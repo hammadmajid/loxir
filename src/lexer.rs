@@ -214,7 +214,7 @@ impl Lexer {
             buffer.push(self.peek());
             self.consume();
         }
-        tokens.push(Lexer::match_literal_or_keyword(buffer));
+        tokens.push(Lexer::match_identifier_or_keyword(buffer));
     }
 
     fn generate_error_msg(line: usize, column: usize, kind: LexerError, token: char) -> String {
@@ -234,7 +234,7 @@ impl Lexer {
         }
     }
 
-    fn match_literal_or_keyword(lexeme: String) -> Token {
+    fn match_identifier_or_keyword(lexeme: String) -> Token {
         let mut keywords_map: HashMap<String, Token> = HashMap::new();
 
         // Populate the keywords_map with all the keywords and their corresponding TokenKind values
