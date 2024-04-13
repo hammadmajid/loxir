@@ -171,63 +171,15 @@ impl Lexer {
                 }
                 // String literal
                 '"' => {
-                    self.consume();
-                    let mut buffer = String::new();
-                    while self.peek() != '"' {
-                        buffer.push(self.peek());
-                        self.consume();
-
-                        if self.peek() == '\0' {
-                            self.errors.push(LexerError {
-                                err_msg: utils::generate_error_msg(self.line_idx, self.col_idx, LexerErrorKind::UnterminatedString, '\0'),
-                                kind: LexerErrorKind::UnterminatedString,
-                            });
-                            self.consume();
-                            break;
-                        } else if self.peek() == '\n' {
-                            self.consume();
-                            self.line_idx += 1;
-                        }
-                    }
-                    self.consume();
-
-                    tokens.push(Token { lexeme: buffer, kind: TokenKind::String })
+                    self.consume_string_literal(&mut tokens);
                 }
 
                 // Identifiers, keywords and unknown tokens
                 _ => {
                     if self.peek().is_ascii_alphabetic() || self.peek() == '_' {
-                        let mut buffer = String::from(self.peek());
-                        self.consume();
-                        while self.peek() != ' ' && self.peek() != '\n' && self.peek() != '\0' {
-                            if !self.peek().is_ascii_alphabetic() && !self.peek().is_ascii_digit() && self.peek() != '_' {
-                                break;
-                            }
-                            buffer.push(self.peek());
-                            self.consume();
-                        }
-                        tokens.push(utils::match_literal_or_keyword(buffer));
+                        self.consume_keyword_or_literal(&mut tokens);
                     } else if self.peek().is_ascii_digit() {
-                        let mut buffer = String::from(self.peek());
-                        self.consume();
-                        while self.peek().is_ascii_digit() {
-                            buffer.push(self.peek());
-                            self.consume();
-                        }
-                        // Check for a decimal point
-                        if self.peek() == '.' {
-                            // Ensure the dot is not the last character
-                            if self.peek_next().is_some() && self.peek_next().unwrap().is_ascii_digit() {
-                                buffer.push(self.peek());
-                                self.consume();
-                                // Consume digits after the dot
-                                while self.peek().is_ascii_digit() {
-                                    buffer.push(self.peek());
-                                    self.consume();
-                                }
-                            }
-                        }
-                        tokens.push(Token { lexeme: buffer, kind: TokenKind::Number });
+                        self.consume_number(&mut tokens);
                     } else {
                         self.has_error = true;
                         self.errors.push(LexerError {
@@ -241,6 +193,66 @@ impl Lexer {
         }
 
         tokens
+    }
+
+    fn consume_string_literal(&mut self, tokens: &mut Vec<Token>) {
+        self.consume();
+        let mut buffer = String::new();
+        while self.peek() != '"' {
+            buffer.push(self.peek());
+            self.consume();
+
+            if self.peek() == '\0' {
+                self.errors.push(LexerError {
+                    err_msg: utils::generate_error_msg(self.line_idx, self.col_idx, LexerErrorKind::UnterminatedString, '\0'),
+                    kind: LexerErrorKind::UnterminatedString,
+                });
+                self.consume();
+                break;
+            } else if self.peek() == '\n' {
+                self.consume();
+                self.line_idx += 1;
+            }
+        }
+        self.consume();
+
+        tokens.push(Token { lexeme: buffer, kind: TokenKind::String })
+    }
+
+    fn consume_number(&mut self, tokens: &mut Vec<Token>) {
+        let mut buffer = String::from(self.peek());
+        self.consume();
+        while self.peek().is_ascii_digit() {
+            buffer.push(self.peek());
+            self.consume();
+        }
+        // Check for a decimal point
+        if self.peek() == '.' {
+            // Ensure the dot is not the last character
+            if self.peek_next().is_some() && self.peek_next().unwrap().is_ascii_digit() {
+                buffer.push(self.peek());
+                self.consume();
+                // Consume digits after the dot
+                while self.peek().is_ascii_digit() {
+                    buffer.push(self.peek());
+                    self.consume();
+                }
+            }
+        }
+        tokens.push(Token { lexeme: buffer, kind: TokenKind::Number });
+    }
+
+    fn consume_keyword_or_literal(&mut self, tokens: &mut Vec<Token>) {
+        let mut buffer = String::from(self.peek());
+        self.consume();
+        while self.peek() != ' ' && self.peek() != '\n' && self.peek() != '\0' {
+            if !self.peek().is_ascii_alphabetic() && !self.peek().is_ascii_digit() && self.peek() != '_' {
+                break;
+            }
+            buffer.push(self.peek());
+            self.consume();
+        }
+        tokens.push(utils::match_literal_or_keyword(buffer));
     }
 
 
@@ -338,7 +350,7 @@ mod utils {
 
     pub fn generate_error_msg(line: usize, column: usize, kind: LexerErrorKind, token: char) -> String {
         let mut error_map: HashMap<LexerErrorKind, &str> = HashMap::new();
-        
+
         let binding = format!("Unknown token found {}", token);
         error_map.insert(LexerErrorKind::UnknownToken, &binding);
         error_map.insert(LexerErrorKind::UnterminatedString, "Unterminated string");
