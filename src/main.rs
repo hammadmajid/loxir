@@ -58,7 +58,7 @@ fn run(source: String, mode: RunMode) {
 
     if lexer.has_error {
         for error in lexer.errors {
-            eprintln!("{}", error.err_msg);
+            eprintln!("{}", error);
         }
         match mode {
             RunMode::File => {

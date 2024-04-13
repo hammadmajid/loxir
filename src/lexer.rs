@@ -6,7 +6,7 @@ pub struct Lexer {
     col_idx: usize,
     read_idx: usize,
     pub has_error: bool,
-    pub errors: Vec<LexerError>,
+    pub errors: Vec<String>,
 }
 
 impl Lexer {
@@ -127,7 +127,7 @@ impl Lexer {
                 }
                 '<' => {
                     self.consume();
-                    tokens.push(Token ::Less)
+                    tokens.push(Token::Less)
                 }
                 '>' => {
                     self.consume();
@@ -146,10 +146,8 @@ impl Lexer {
                         self.consume_number(&mut tokens);
                     } else {
                         self.has_error = true;
-                        self.errors.push(LexerError {
-                            err_msg: Lexer::generate_error_msg(self.line_idx, self.col_idx, LexerErrorKind::UnknownToken, self.peek()),
-                            kind: LexerErrorKind::UnknownToken,
-                        });
+                        self.errors.push(Lexer::generate_error_msg(self.line_idx, self.col_idx, LexerError::UnknownToken, self.peek()),
+                        );
                         self.consume();
                     }
                 }
@@ -167,10 +165,8 @@ impl Lexer {
             self.consume();
 
             if self.peek() == '\0' {
-                self.errors.push(LexerError {
-                    err_msg: Lexer::generate_error_msg(self.line_idx, self.col_idx, LexerErrorKind::UnterminatedString, '\0'),
-                    kind: LexerErrorKind::UnterminatedString,
-                });
+                self.errors.push(Lexer::generate_error_msg(self.line_idx, self.col_idx, LexerError::UnterminatedString, '\0'),
+                );
                 self.consume();
                 break;
             } else if self.peek() == '\n' {
@@ -219,12 +215,12 @@ impl Lexer {
         tokens.push(Lexer::match_literal_or_keyword(buffer));
     }
 
-    fn generate_error_msg(line: usize, column: usize, kind: LexerErrorKind, token: char) -> String {
-        let mut error_map: HashMap<LexerErrorKind, &str> = HashMap::new();
+    fn generate_error_msg(line: usize, column: usize, kind: LexerError, token: char) -> String {
+        let mut error_map: HashMap<LexerError, &str> = HashMap::new();
 
         let binding = format!("Unknown token found {}", token);
-        error_map.insert(LexerErrorKind::UnknownToken, &binding);
-        error_map.insert(LexerErrorKind::UnterminatedString, "Unterminated string");
+        error_map.insert(LexerError::UnknownToken, &binding);
+        error_map.insert(LexerError::UnterminatedString, "Unterminated string");
 
         let msg = error_map.get(&kind);
 
@@ -287,15 +283,8 @@ impl Lexer {
     }
 }
 
-#[derive(Debug)]
-#[allow(dead_code)]
-pub struct LexerError {
-    pub err_msg: String,
-    kind: LexerErrorKind,
-}
-
 #[derive(Debug, PartialEq, Eq, Hash)]
-pub enum LexerErrorKind {
+pub enum LexerError {
     UnknownToken,
     UnterminatedString,
 }
@@ -373,8 +362,7 @@ mod tests {
         let _tokens = lexer.scan();
 
         assert!(lexer.has_error);
-        assert_eq!(lexer.errors[0].kind, LexerErrorKind::UnknownToken);
-        assert_eq!(lexer.errors[0].err_msg, "[0:12] Unknown token found @");
+        assert_eq!(lexer.errors[0], "[0:12] Unknown token found @");
     }
 
     #[test]
