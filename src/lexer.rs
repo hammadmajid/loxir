@@ -278,7 +278,7 @@ impl Lexer {
 
     fn peek_next(&self) -> Option<char> {
         if self.read_idx + 1 < self.chars.len() {
-            Some(self.chars[self.read_idx])
+            Some(self.chars[self.read_idx + 1])
         } else {
             None
         }
