@@ -41,80 +41,47 @@ impl Lexer {
                     self.consume()
                 }
                 '\0' => {
-                    tokens.push(Token {
-                        lexeme: self.peek().to_string(),
-                        kind: TokenKind::Eof,
-                    });
+                    tokens.push(Token::Eof);
                     self.consume();
                 }
                 ';' => {
-                    tokens.push(Token {
-                        lexeme: self.peek().to_string(),
-                        kind: TokenKind::Semicolon,
-                    });
+                    tokens.push(Token::Semicolon);
                     self.consume();
                 }
                 '+' => {
-                    tokens.push(Token {
-                        lexeme: self.peek().to_string(),
-                        kind: TokenKind::Plus,
-                    });
+                    tokens.push(Token::Plus);
                     self.consume();
                 }
                 '-' => {
-                    tokens.push(Token {
-                        lexeme: self.peek().to_string(),
-                        kind: TokenKind::Minus,
-                    });
+                    tokens.push(Token::Minus);
                     self.consume();
                 }
                 '*' => {
-                    tokens.push(Token {
-                        lexeme: self.peek().to_string(),
-                        kind: TokenKind::Star,
-                    });
+                    tokens.push(Token::Star);
                     self.consume();
                 }
                 ',' => {
-                    tokens.push(Token {
-                        lexeme: self.peek().to_string(),
-                        kind: TokenKind::Comma,
-                    });
+                    tokens.push(Token::Comma);
                     self.consume();
                 }
                 '.' => {
-                    tokens.push(Token {
-                        lexeme: self.peek().to_string(),
-                        kind: TokenKind::Dot,
-                    });
+                    tokens.push(Token::Dot);
                     self.consume();
                 }
                 '(' => {
-                    tokens.push(Token {
-                        lexeme: self.peek().to_string(),
-                        kind: TokenKind::LeftParen,
-                    });
+                    tokens.push(Token::LeftParen);
                     self.consume();
                 }
                 ')' => {
-                    tokens.push(Token {
-                        lexeme: self.peek().to_string(),
-                        kind: TokenKind::RightParen,
-                    });
+                    tokens.push(Token::RightParen);
                     self.consume();
                 }
                 '{' => {
-                    tokens.push(Token {
-                        lexeme: self.peek().to_string(),
-                        kind: TokenKind::LeftBrace,
-                    });
+                    tokens.push(Token::LeftBrace);
                     self.consume();
                 }
                 '}' => {
-                    tokens.push(Token {
-                        lexeme: self.peek().to_string(),
-                        kind: TokenKind::RightBrace,
-                    });
+                    tokens.push(Token::RightBrace);
                     self.consume();
                 }
                 '/' => {
@@ -128,10 +95,7 @@ impl Lexer {
                         self.col_idx = 0;
                     } else {
                         // Not a comment, so it's a slash token
-                        tokens.push(Token {
-                            lexeme: '/'.to_string(),
-                            kind: TokenKind::Slash,
-                        });
+                        tokens.push(Token::Slash);
                     }
                 }
 
@@ -139,35 +103,35 @@ impl Lexer {
                 '!' => {
                     if self.peek() == '=' {
                         self.consume();
-                        tokens.push(Token { lexeme: "!=".to_string(), kind: TokenKind::BangEqual })
+                        tokens.push(Token::BangEqual)
                     } else {
                         self.consume();
-                        tokens.push(Token { lexeme: "!".to_string(), kind: TokenKind::Bang })
+                        tokens.push(Token::Bang)
                     }
                 }
                 '=' => {
                     self.consume();
                     if self.peek() == '=' {
                         self.consume();
-                        tokens.push(Token { lexeme: "==".to_string(), kind: TokenKind::EqualEqual })
+                        tokens.push(Token::EqualEqual)
                     } else if self.peek() == '>' {
                         self.consume();
-                        tokens.push(Token { lexeme: "=>".to_string(), kind: TokenKind::GreaterEqual })
+                        tokens.push(Token::GreaterEqual)
                     } else if self.peek() == '<' {
                         self.consume();
-                        tokens.push(Token { lexeme: "=<".to_string(), kind: TokenKind::LessEqual })
+                        tokens.push(Token::LessEqual)
                     } else {
                         self.consume();
-                        tokens.push(Token { lexeme: "=".to_string(), kind: TokenKind::Equal })
+                        tokens.push(Token::Equal)
                     }
                 }
                 '<' => {
                     self.consume();
-                    tokens.push(Token { lexeme: "<".to_string(), kind: TokenKind::Less })
+                    tokens.push(Token ::Less)
                 }
                 '>' => {
                     self.consume();
-                    tokens.push(Token { lexeme: "<".to_string(), kind: TokenKind::Greater })
+                    tokens.push(Token::Greater)
                 }
                 // String literal
                 '"' => {
@@ -216,7 +180,7 @@ impl Lexer {
         }
         self.consume();
 
-        tokens.push(Token { lexeme: buffer, kind: TokenKind::String })
+        tokens.push(Token::String(buffer))
     }
 
     fn consume_number(&mut self, tokens: &mut Vec<Token>) {
@@ -239,7 +203,7 @@ impl Lexer {
                 }
             }
         }
-        tokens.push(Token { lexeme: buffer, kind: TokenKind::Number });
+        tokens.push(Token::Number(buffer));
     }
 
     fn consume_keyword_or_literal(&mut self, tokens: &mut Vec<Token>) {
@@ -287,15 +251,9 @@ pub enum LexerErrorKind {
     UnterminatedString,
 }
 
-#[derive(Debug)]
-#[derive(PartialEq)]
-pub struct Token {
-    pub lexeme: String,
-    pub kind: TokenKind,
-}
-
-#[derive(Debug, PartialEq, Copy, Clone)]
-pub enum TokenKind {
+#[derive(Debug, PartialEq)]
+#[derive(Clone)]
+pub enum Token {
     // Single-character tokens.
     LeftParen,
     RightParen,
@@ -320,9 +278,9 @@ pub enum TokenKind {
     LessEqual,
 
     // Literals.
-    Identifier,
-    String,
-    Number,
+    Identifier(String),
+    String(String),
+    Number(String),
 
     // Keywords.
     And,
@@ -366,40 +324,34 @@ mod utils {
     }
 
     pub fn match_literal_or_keyword(lexeme: String) -> Token {
-        let mut keywords_map: HashMap<String, TokenKind> = HashMap::new();
+        let mut keywords_map: HashMap<String, Token> = HashMap::new();
 
         // Populate the keywords_map with all the keywords and their corresponding TokenKind values
-        keywords_map.insert(String::from("and"), TokenKind::And);
-        keywords_map.insert(String::from("class"), TokenKind::Class);
-        keywords_map.insert(String::from("else"), TokenKind::Else);
-        keywords_map.insert(String::from("false"), TokenKind::False);
-        keywords_map.insert(String::from("fun"), TokenKind::Fun);
-        keywords_map.insert(String::from("for"), TokenKind::For);
-        keywords_map.insert(String::from("if"), TokenKind::If);
-        keywords_map.insert(String::from("nil"), TokenKind::Nil);
-        keywords_map.insert(String::from("or"), TokenKind::Or);
-        keywords_map.insert(String::from("print"), TokenKind::Print);
-        keywords_map.insert(String::from("return"), TokenKind::Return);
-        keywords_map.insert(String::from("super"), TokenKind::Super);
-        keywords_map.insert(String::from("this"), TokenKind::This);
-        keywords_map.insert(String::from("true"), TokenKind::True);
-        keywords_map.insert(String::from("var"), TokenKind::Var);
-        keywords_map.insert(String::from("while"), TokenKind::While);
+        keywords_map.insert(String::from("and"), Token::And);
+        keywords_map.insert(String::from("class"), Token::Class);
+        keywords_map.insert(String::from("else"), Token::Else);
+        keywords_map.insert(String::from("false"), Token::False);
+        keywords_map.insert(String::from("fun"), Token::Fun);
+        keywords_map.insert(String::from("for"), Token::For);
+        keywords_map.insert(String::from("if"), Token::If);
+        keywords_map.insert(String::from("nil"), Token::Nil);
+        keywords_map.insert(String::from("or"), Token::Or);
+        keywords_map.insert(String::from("print"), Token::Print);
+        keywords_map.insert(String::from("return"), Token::Return);
+        keywords_map.insert(String::from("super"), Token::Super);
+        keywords_map.insert(String::from("this"), Token::This);
+        keywords_map.insert(String::from("true"), Token::True);
+        keywords_map.insert(String::from("var"), Token::Var);
+        keywords_map.insert(String::from("while"), Token::While);
 
         let found = keywords_map.get(&lexeme);
 
         match found {
             None => {
-                Token {
-                    lexeme,
-                    kind: TokenKind::Identifier,
-                }
+                Token::Identifier(lexeme)
             }
             Some(kind) => {
-                Token {
-                    lexeme,
-                    kind: *kind,
-                }
+                kind.clone()
             }
         }
     }
@@ -416,7 +368,7 @@ mod tests {
         let tokens = lexer.scan();
 
         assert_eq!(tokens.len(), 5);
-        assert_eq!(tokens[4].kind, TokenKind::Semicolon);
+        assert_eq!(tokens[4], Token::Semicolon);
     }
 
     #[test]
@@ -437,8 +389,8 @@ mod tests {
         let tokens = lexer.scan();
 
         assert_eq!(tokens.len(), 10);
-        assert_eq!(tokens[3].kind, TokenKind::String);
-        assert_eq!(tokens[8].kind, TokenKind::Number);
+        assert_eq!(tokens[3], Token::String(String::from("John Doe")));
+        assert_eq!(tokens[8], Token::Number(String::from("30")));
     }
 
     #[test]
@@ -448,8 +400,8 @@ mod tests {
         let tokens = lexer.scan();
 
         assert_eq!(tokens.len(), 5);
-        assert_eq!(tokens[0].kind, TokenKind::Var);
-        assert_eq!(tokens[1].kind, TokenKind::Identifier);
-        assert_eq!(tokens[3].kind, TokenKind::True);
+        assert_eq!(tokens[0], Token::Var);
+        assert_eq!(tokens[1], Token::Identifier(String::from("myVar")));
+        assert_eq!(tokens[3], Token::True);
     }
 }
