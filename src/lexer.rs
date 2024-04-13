@@ -92,6 +92,36 @@ impl Lexer {
                         }
                         self.line_idx += 1;
                         self.col_idx = 0;
+                    } else if self.peek() == '*' {
+                        // FIXME: refactor this ugly af duplicate code
+                        self.consume();
+                        loop {
+                            if self.peek() == '*' {
+                                self.consume();
+                                if self.peek() == '/' {
+                                    self.consume();
+                                    break;
+                                } else if self.peek() == '\n' {
+                                    self.line_idx += 1;
+                                    self.consume();
+                                } else if self.peek() == '\0' {
+                                    self.has_error = true;
+                                    self.errors.push(Lexer::generate_error_msg(self.line_idx, self.col_idx, LexerError::UnterminatedMultilineComment, self.peek()));
+                                    break;
+                                } else {
+                                    self.consume();
+                                }
+                            } else if self.peek() == '\n' {
+                                self.line_idx += 1;
+                                self.consume();
+                            } else if self.peek() == '\0' {
+                                self.has_error = true;
+                                self.errors.push(Lexer::generate_error_msg(self.line_idx, self.col_idx, LexerError::UnterminatedMultilineComment, self.peek()));
+                                break;
+                            } else {
+                                self.consume();
+                            }
+                        }
                     } else {
                         // Not a comment, so it's a slash token
                         tokens.push(Token::Slash);
@@ -223,6 +253,7 @@ impl Lexer {
         let binding = format!("Unknown token found {}", token);
         error_map.insert(LexerError::UnknownToken, &binding);
         error_map.insert(LexerError::UnterminatedString, "Unterminated string");
+        error_map.insert(LexerError::UnterminatedMultilineComment, "Unterminated multiline comment");
 
         let msg = error_map.get(&kind);
 
@@ -289,6 +320,7 @@ impl Lexer {
 pub enum LexerError {
     UnknownToken,
     UnterminatedString,
+    UnterminatedMultilineComment,
 }
 
 #[derive(Debug, PartialEq)]
