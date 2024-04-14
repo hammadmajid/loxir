@@ -47,103 +47,15 @@ impl Lexer {
                 '{' => { tokens.push(self.consume_token(Token::LeftBrace)); }
                 '}' => { tokens.push(self.consume_token(Token::RightBrace)); }
                 '/' => {
-                    self.consume(); // Consume the first '/'
-                    if self.peek() == '/' {
-                        // Single-line comment
-                        while self.peek() != '\n' && self.peek() != '\0' {
-                            self.consume();
-                        }
-                        self.line_idx += 1;
-                        self.col_idx = 0;
-                    } else if self.peek() == '*' {
-                        // FIXME: refactor this ugly af duplicate code
-                        self.consume();
-                        loop {
-                            if self.peek() == '*' {
-                                self.consume();
-                                if self.peek() == '/' {
-                                    self.consume();
-                                    break;
-                                } else if self.peek() == '\n' {
-                                    self.line_idx += 1;
-                                    self.consume();
-                                } else if self.peek() == '\0' {
-                                    self.has_error = true;
-                                    self.errors.push(self.generate_error_msg(LexerError::UnterminatedMultilineComment));
-                                    break;
-                                } else {
-                                    self.consume();
-                                }
-                            } else if self.peek() == '\n' {
-                                self.line_idx += 1;
-                                self.consume();
-                            } else if self.peek() == '\0' {
-                                self.has_error = true;
-                                self.errors.push(self.generate_error_msg(LexerError::UnterminatedMultilineComment));
-                                break;
-                            } else {
-                                self.consume();
-                            }
-                        }
-                    } else {
-                        // Not a comment, so it's a slash token
-                        tokens.push(Token::Slash);
-                    }
+                    self.handle_slash(&mut tokens);
                 }
-
-                // Single or multi-character tokens
-                '!' => {
-                    self.consume();
-                    if self.peek() == '=' {
-                        self.consume();
-                        tokens.push(Token::BangEqual)
-                    } else {
-                        self.consume();
-                        tokens.push(Token::Bang)
-                    }
-                }
-                '=' => {
-                    self.consume();
-                    if self.peek() == '=' {
-                        self.consume();
-                        tokens.push(Token::EqualEqual)
-                    } else {
-                        self.consume();
-                        tokens.push(Token::Equal)
-                    }
-                }
-                '<' => {
-                    self.consume();
-                    if self.peek() == '=' {
-                        self.consume();
-                        tokens.push(Token::LessEqual)
-                    } else {
-                        self.consume();
-                        tokens.push(Token::Less)
-                    }
-                }
-                '>' => {
-                    self.consume();
-                    if self.peek() == '=' {
-                        self.consume();
-                        tokens.push(Token::GreaterEqual)
-                    } else {
-                        self.consume();
-                        tokens.push(Token::Greater)
-                    }
-                }
-                // Variable length tokens
-                '"' => {
-                    self.consume_string_literal(&mut tokens);
-                }
-                '0'..='9' => {
-                    self.consume_number(&mut tokens);
-                }
-                'a'..='z' | 'A'..='Z' | '_' => {
-                    self.consume_keyword_or_literal(&mut tokens)
-                }
-
-                // Unknown tokens
+                '!' => self.handle_one_or_two_character_tokens(&mut tokens, Token::Bang, Token::BangEqual),
+                '=' => self.handle_one_or_two_character_tokens(&mut tokens, Token::Equal, Token::EqualEqual),
+                '<' => self.handle_one_or_two_character_tokens(&mut tokens, Token::Less, Token::LessEqual),
+                '>' => self.handle_one_or_two_character_tokens(&mut tokens, Token::Greater, Token::GreaterEqual),
+                '"' => { self.consume_string_literal(&mut tokens); }
+                '0'..='9' => { self.consume_number(&mut tokens); }
+                'a'..='z' | 'A'..='Z' | '_' => { self.consume_keyword_or_literal(&mut tokens) }
                 _ => {
                     self.has_error = true;
                     self.errors.push(self.generate_error_msg(LexerError::UnknownToken),
@@ -156,6 +68,58 @@ impl Lexer {
         tokens.push(Token::Eof);
 
         tokens
+    }
+
+    fn handle_slash(&mut self, tokens: &mut Vec<Token>) {
+        self.consume(); // Consume the first '/'
+        if self.peek() == '/' {
+            self.consume_single_line_comment();
+        } else if self.peek() == '*' {
+            self.consume_multi_line_comment();
+        } else {
+            // Not a comment, so it's a slash token
+            tokens.push(self.consume_token(Token::Slash));
+        }
+    }
+
+    fn consume_multi_line_comment(&mut self) {
+        self.consume(); // Consume the '*'
+        loop {
+            if self.peek() == '*' {
+                self.consume();
+                if self.peek() == '/' {
+                    self.consume();
+                    break;
+                }
+            } else if self.peek() == '\n' {
+                self.line_idx += 1;
+                self.consume();
+            } else if self.peek() == '\0' {
+                self.has_error = true;
+                self.errors.push(self.generate_error_msg(LexerError::UnterminatedMultilineComment));
+                break;
+            } else {
+                self.consume();
+            }
+        }
+    }
+
+    fn consume_single_line_comment(&mut self) {
+        // Single-line comment
+        while self.peek() != '\n' && self.peek() != '\0' {
+            self.consume();
+        }
+        self.line_idx += 1;
+        self.col_idx = 0;
+    }
+
+    fn handle_one_or_two_character_tokens(&mut self, tokens: &mut Vec<Token>, token_if_single: Token, token_if_double: Token) {
+        self.consume();
+        if self.peek() == '=' {
+            tokens.push(self.consume_token(token_if_double));
+        } else {
+            tokens.push(self.consume_token(token_if_single));
+        }
     }
 
     fn consume_string_literal(&mut self, tokens: &mut Vec<Token>) {
