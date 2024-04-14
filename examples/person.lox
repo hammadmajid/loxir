@@ -1,0 +1,13 @@
+class Person {
+ init(name, age) {
+    this.name = name;
+    this.age = age;
+ }
+
+ sayHello() {
+    print "Hello, my name is " + this.name + " and I am " + this.age + " years old.";
+ }
+}
+
+var alice = Person("Alice", 30);
+alice.sayHello();
