@@ -24,12 +24,10 @@ impl Lexer {
     pub fn scan(&mut self) -> Vec<Token> {
         let mut tokens: Vec<Token> = vec![];
 
-        loop {
-            if self.peek_next().is_none() {
-                break;
-            }
+        while let Some(character) = self.peek() {
+            if self.peek_next().is_none() { break; }
 
-            match self.peek() {
+            match character {
                 ' ' | '\0' => { self.consume(); }
                 '\n' => {
                     self.line_idx += 1;
@@ -46,9 +44,7 @@ impl Lexer {
                 ')' => { tokens.push(self.consume_token(Token::RightParen)); }
                 '{' => { tokens.push(self.consume_token(Token::LeftBrace)); }
                 '}' => { tokens.push(self.consume_token(Token::RightBrace)); }
-                '/' => {
-                    self.handle_slash(&mut tokens);
-                }
+                '/' => { self.handle_slash(&mut tokens); }
                 '!' => self.handle_one_or_two_character_tokens(&mut tokens, Token::Bang, Token::BangEqual),
                 '=' => self.handle_one_or_two_character_tokens(&mut tokens, Token::Equal, Token::EqualEqual),
                 '<' => self.handle_one_or_two_character_tokens(&mut tokens, Token::Less, Token::LessEqual),
@@ -72,9 +68,9 @@ impl Lexer {
 
     fn handle_slash(&mut self, tokens: &mut Vec<Token>) {
         self.consume(); // Consume the first '/'
-        if self.peek() == '/' {
+        if self.peek() == Some(&'/') {
             self.consume_single_line_comment();
-        } else if self.peek() == '*' {
+        } else if self.peek() == Some(&'*') {
             self.consume_multi_line_comment();
         } else {
             // Not a comment, so it's a slash token
@@ -85,28 +81,31 @@ impl Lexer {
     fn consume_multi_line_comment(&mut self) {
         self.consume(); // Consume the '*'
         loop {
-            if self.peek() == '*' {
-                self.consume();
-                if self.peek() == '/' {
+            match self.peek() {
+                Some(&'*') => {
                     self.consume();
+                    if self.peek() == Some(&'/') {
+                        self.consume();
+                        break;
+                    }
+                }
+                Some(&'\n') => {
+                    self.line_idx += 1;
+                    self.consume();
+                }
+                Some(&'\0') => {
+                    self.has_error = true;
+                    self.errors.push(self.generate_error_msg(LexerError::UnterminatedMultilineComment));
                     break;
                 }
-            } else if self.peek() == '\n' {
-                self.line_idx += 1;
-                self.consume();
-            } else if self.peek() == '\0' {
-                self.has_error = true;
-                self.errors.push(self.generate_error_msg(LexerError::UnterminatedMultilineComment));
-                break;
-            } else {
-                self.consume();
+                _ => self.consume(),
             }
         }
     }
 
     fn consume_single_line_comment(&mut self) {
         // Single-line comment
-        while self.peek() != '\n' && self.peek() != '\0' {
+        while self.peek() != Some(&'\n') && self.peek() != Some(&'\0') {
             self.consume();
         }
         self.line_idx += 1;
@@ -115,7 +114,7 @@ impl Lexer {
 
     fn handle_one_or_two_character_tokens(&mut self, tokens: &mut Vec<Token>, token_if_single: Token, token_if_double: Token) {
         self.consume();
-        if self.peek() == '=' {
+        if self.peek() == Some(&'=') {
             tokens.push(self.consume_token(token_if_double));
         } else {
             tokens.push(self.consume_token(token_if_single));
@@ -125,19 +124,22 @@ impl Lexer {
     fn consume_string_literal(&mut self, tokens: &mut Vec<Token>) {
         self.consume();
         let mut buffer = String::new();
-        while self.peek() != '"' {
-            buffer.push(self.peek());
-            self.consume();
+        while self.peek() != Some(&'"') {
+            if let Some(c) = self.peek() {
+                buffer.push(*c);
+                self.consume();
 
-            if self.peek() == '\0' {
-                self.has_error = true;
-                self.errors.push(self.generate_error_msg(LexerError::UnterminatedString),
-                );
-                self.consume();
+                if self.peek() == Some(&'\0') {
+                    self.has_error = true;
+                    self.errors.push(self.generate_error_msg(LexerError::UnterminatedString));
+                    self.consume();
+                    break;
+                } else if self.peek() == Some(&'\n') {
+                    self.consume();
+                    self.line_idx += 1;
+                }
+            } else {
                 break;
-            } else if self.peek() == '\n' {
-                self.consume();
-                self.line_idx += 1;
             }
         }
         self.consume();
@@ -146,21 +148,26 @@ impl Lexer {
     }
 
     fn consume_number(&mut self, tokens: &mut Vec<Token>) {
-        let mut buffer = String::from(self.peek());
-        self.consume();
-        while self.peek().is_ascii_digit() {
-            buffer.push(self.peek());
+        let mut buffer = String::new();
+        if let Some(c) = self.peek() {
+            buffer.push(*c);
             self.consume();
         }
+        while self.peek().map_or(false, |c| c.is_ascii_digit()) {
+            if let Some(c) = self.peek() {
+                buffer.push(*c);
+                self.consume();
+            }
+        }
         // Check for a decimal point
-        if self.peek() == '.' {
+        if self.peek() == Some(&'.') {
             // Ensure the dot is not the last character
-            if self.peek_next().is_some() && self.peek_next().unwrap().is_ascii_digit() {
-                buffer.push(self.peek());
+            if self.peek_next().map_or(false, |c| c.is_ascii_digit()) {
+                buffer.push(*self.peek().unwrap());
                 self.consume();
                 // Consume digits after the dot
-                while self.peek().is_ascii_digit() {
-                    buffer.push(self.peek());
+                while self.peek().map_or(false, |c| c.is_ascii_digit()) {
+                    buffer.push(*self.peek().unwrap());
                     self.consume();
                 }
             }
@@ -169,30 +176,40 @@ impl Lexer {
     }
 
     fn consume_keyword_or_literal(&mut self, tokens: &mut Vec<Token>) {
-        let mut buffer = String::from(self.peek());
-        self.consume();
-        while self.peek() != ' ' && self.peek() != '\n' && self.peek() != '\0' {
-            if !self.peek().is_ascii_alphabetic() && !self.peek().is_ascii_digit() && self.peek() != '_' {
-                break;
-            }
-            buffer.push(self.peek());
+        let mut buffer = String::new();
+        if let Some(c) = self.peek() {
+            buffer.push(*c);
             self.consume();
+        }
+        while self.peek().map_or(false, |c| c.is_ascii_alphabetic() || c.is_ascii_digit() || *c == '_') {
+            if let Some(c) = self.peek() {
+                buffer.push(*c);
+                self.consume();
+            }
         }
         tokens.push(self.match_identifier_or_keyword(buffer));
     }
 
     fn generate_error_msg(&self, kind: LexerError) -> String {
-        let mut error_map: HashMap<LexerError, &str> = HashMap::new();
+        let mut error_map: HashMap<LexerError, String> = HashMap::new();
 
-        let binding = format!("Unknown token found {}", self.peek());
-        error_map.insert(LexerError::UnknownToken, &binding);
-        error_map.insert(LexerError::UnterminatedString, "Unterminated string");
-        error_map.insert(LexerError::UnterminatedMultilineComment, "Unterminated multiline comment");
+        let token_char = match self.peek() {
+            Some(c) => c.to_string(),
+            None => String::from("EOF"), // Assuming "EOF" for end of file
+        };
+
+        let binding = format!("Unknown token found {}", token_char);
+        error_map.insert(LexerError::UnknownToken, binding);
+        error_map.insert(LexerError::UnterminatedString, "Unterminated string".to_string());
+        error_map.insert(LexerError::UnterminatedMultilineComment, "Unterminated multiline comment".to_string());
 
         let msg = error_map.get(&kind);
 
         match msg {
-            None => { unimplemented!() }
+            None => {
+                // This should not happen since all possible LexerError variants are covered
+                "Internal error: Unknown lexer error type".to_string()
+            }
             Some(msg) => {
                 format!("[{}:{}] {}", self.line_idx, self.col_idx, msg)
             }
@@ -242,17 +259,9 @@ impl Lexer {
         token
     }
 
-    fn peek(&self) -> char {
-        self.chars[self.read_idx]
-    }
+    fn peek(&self) -> Option<&char> { self.chars.get(self.read_idx) }
 
-    fn peek_next(&self) -> Option<char> {
-        if self.read_idx + 1 < self.chars.len() {
-            Some(self.chars[self.read_idx + 1])
-        } else {
-            None
-        }
-    }
+    fn peek_next(&self) -> Option<&char> { self.chars.get(self.read_idx + 1) }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
