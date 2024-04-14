@@ -30,59 +30,22 @@ impl Lexer {
             }
 
             match self.peek() {
-                // Single-character tokens.
-                ' ' => {
-                    // ignore whitespace
-                    self.consume();
-                }
+                ' ' | '\0' => { self.consume(); }
                 '\n' => {
                     self.line_idx += 1;
                     self.col_idx = 0;
                     self.consume()
                 }
-                '\0' => {
-                    self.consume();
-                }
-                ';' => {
-                    tokens.push(Token::Semicolon);
-                    self.consume();
-                }
-                '+' => {
-                    tokens.push(Token::Plus);
-                    self.consume();
-                }
-                '-' => {
-                    tokens.push(Token::Minus);
-                    self.consume();
-                }
-                '*' => {
-                    tokens.push(Token::Star);
-                    self.consume();
-                }
-                ',' => {
-                    tokens.push(Token::Comma);
-                    self.consume();
-                }
-                '.' => {
-                    tokens.push(Token::Dot);
-                    self.consume();
-                }
-                '(' => {
-                    tokens.push(Token::LeftParen);
-                    self.consume();
-                }
-                ')' => {
-                    tokens.push(Token::RightParen);
-                    self.consume();
-                }
-                '{' => {
-                    tokens.push(Token::LeftBrace);
-                    self.consume();
-                }
-                '}' => {
-                    tokens.push(Token::RightBrace);
-                    self.consume();
-                }
+                ';' => { tokens.push(self.consume_token(Token::Semicolon)); }
+                '+' => { tokens.push(self.consume_token(Token::Plus)); }
+                '-' => { tokens.push(self.consume_token(Token::Minus)); }
+                '*' => { tokens.push(self.consume_token(Token::Star)); }
+                ',' => { tokens.push(self.consume_token(Token::Comma)); }
+                '.' => { tokens.push(self.consume_token(Token::Dot)); }
+                '(' => { tokens.push(self.consume_token(Token::LeftParen)); }
+                ')' => { tokens.push(self.consume_token(Token::RightParen)); }
+                '{' => { tokens.push(self.consume_token(Token::LeftBrace)); }
+                '}' => { tokens.push(self.consume_token(Token::RightBrace)); }
                 '/' => {
                     self.consume(); // Consume the first '/'
                     if self.peek() == '/' {
@@ -157,7 +120,8 @@ impl Lexer {
                     } else {
                         self.consume();
                         tokens.push(Token::Less)
-                    }                }
+                    }
+                }
                 '>' => {
                     self.consume();
                     if self.peek() == '=' {
@@ -166,7 +130,8 @@ impl Lexer {
                     } else {
                         self.consume();
                         tokens.push(Token::Greater)
-                    }                }
+                    }
+                }
                 // Variable length tokens
                 '"' => {
                     self.consume_string_literal(&mut tokens);
@@ -306,6 +271,11 @@ impl Lexer {
     fn consume(&mut self) {
         self.read_idx += 1;
         self.col_idx += 1;
+    }
+
+    fn consume_token(&mut self, token: Token) -> Token {
+        self.consume();
+        token
     }
 
     fn peek(&self) -> char {
