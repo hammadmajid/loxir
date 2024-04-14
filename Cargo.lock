@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "r-lox"
+name = "loxir"
 version = "0.1.0"
