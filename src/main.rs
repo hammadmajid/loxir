@@ -1,19 +1,19 @@
 mod lexer;
 
+use lexer::Lexer;
 use std::{
     env, fs,
     io::{stdin, Write},
     path::PathBuf,
     process::exit,
 };
-use lexer::Lexer;
 
 fn main() {
     let argv: Vec<String> = env::args().collect();
     let argc = argv.len();
 
     if argc > 2 {
-        eprintln!("Usage:\n\trlox [script]");
+        eprintln!("Usage:\n\tloxir [script]");
         exit(64);
     } else if argc == 2 {
         let input_file = PathBuf::from(&argv[1]);
@@ -64,7 +64,9 @@ fn run(source: String, mode: RunMode) {
             RunMode::File => {
                 exit(65);
             }
-            RunMode::REPL => { return; }
+            RunMode::REPL => {
+                return;
+            }
         }
     } else {
         for token in tokens {
